@@ -7,5 +7,5 @@ function setup() {
 function draw() {
     background(220);
     rotate(mouseY);
-    rect(width/2, height/2, 100, 100);
+    rect(width / 2, height / 2, 100, 100);
 }
