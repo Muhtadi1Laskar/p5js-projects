@@ -1,113 +1,158 @@
 let board = [
     ['', '', ''],
     ['', '', ''],
-    ['', '', ''],
+    ['', '', '']
   ];
-  
-  let players = ['X', 'O'];
-  
-  let currentPlayer;
-  let available = [];
+  let human = 'O';
+  let ai = 'X';
+  let currentPlayer = human;
   
   function setup() {
     createCanvas(400, 400);
+    textAlign(CENTER, CENTER);
+    textSize(32);
+    noLoop();
     frameRate(30);
-    currentPlayer = floor(random(players.length));
-    for (let j = 0; j < 3; j++) {
-      for (let i = 0; i < 3; i++) {
-        available.push([i, j]);
+  }
+  
+  function draw() {
+    background(220);
+    drawGrid();
+    drawBoard();
+    if (checkWinner() !== null) {
+      noLoop();
+      let result = checkWinner();
+      let msg = result === 'tie' ? 'It\'s a Tie!' : `${result} Wins!`;
+      createP(msg).style('font-size', '32px').style('text-align', 'center');
+    }
+  }
+  
+  function drawGrid() {
+    strokeWeight(4);
+    line(width / 3, 0, width / 3, height);
+    line(2 * width / 3, 0, 2 * width / 3, height);
+    line(0, height / 3, width, height / 3);
+    line(0, 2 * height / 3, width, 2 * height / 3);
+  }
+  
+  function drawBoard() {
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 3; j++) {
+        let x = j * width / 3 + width / 6;
+        let y = i * height / 3 + height / 6;
+        let spot = board[i][j];
+        if (spot === human) {
+          noFill();
+          ellipse(x, y, width / 6);
+        } else if (spot === ai) {
+          line(x - width / 12, y - height / 12, x + width / 12, y + height / 12);
+          line(x + width / 12, y - height / 12, x - width / 12, y + height / 12);
+        }
       }
     }
   }
   
-  function equals3(a, b, c) {
-    return (a == b && b == c && a != '');
+  function mousePressed() {
+    if (currentPlayer === human) {
+      let i = floor(mouseY / (height / 3));
+      let j = floor(mouseX / (width / 3));
+      if (board[i][j] === '') {
+        board[i][j] = human;
+        currentPlayer = ai;
+        loop();
+        setTimeout(() => {
+          aiMove();
+          loop();
+        }, 500);
+      }
+    }
+  }
+  
+  function aiMove() {
+    let bestScore = -Infinity;
+    let move;
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 3; j++) {
+        if (board[i][j] === '') {
+          board[i][j] = ai;
+          let score = minimax(board, 0, false);
+          board[i][j] = '';
+          if (score > bestScore) {
+            bestScore = score;
+            move = { i, j };
+          }
+        }
+      }
+    }
+    board[move.i][move.j] = ai;
+    currentPlayer = human;
   }
   
   function checkWinner() {
-    let winner = null;
-  
+    // Check rows, columns, and diagonals
     for (let i = 0; i < 3; i++) {
-      if (equals3(board[i][0], board[i][1], board[i][2])) {
-        winner = board[i][0];
+      if (board[i][0] === board[i][1] && board[i][1] === board[i][2] && board[i][0] !== '') {
+        return board[i][0];
+      }
+      if (board[0][i] === board[1][i] && board[1][i] === board[2][i] && board[0][i] !== '') {
+        return board[0][i];
       }
     }
-  
+    if (board[0][0] === board[1][1] && board[1][1] === board[2][2] && board[0][0] !== '') {
+      return board[0][0];
+    }
+    if (board[0][2] === board[1][1] && board[1][1] === board[2][0] && board[0][2] !== '') {
+      return board[0][2];
+    }
+    // Check tie
+    let openSpots = 0;
     for (let i = 0; i < 3; i++) {
-      if (equals3(board[0][i], board[1][i], board[2][i])) {
-        winner = board[0][i];
-      }
-    }
-  
-    if (equals3(board[0][0], board[1][1], board[2][2])) {
-      winner = board[0][0];
-    }
-    if (equals3(board[2][0], board[1][1], board[0][2])) {
-      winner = board[2][0];
-    }
-  
-    if (winner == null && available.length == 0) {
-      return 'tie';
-    } else {
-      return winner;
-    }
-  
-  }
-  
-  function nextTurn() {
-    let index = floor(random(available.length));
-    let spot = available.splice(index, 1)[0];
-    let i = spot[0];
-    let j = spot[1];
-    board[i][j] = players[currentPlayer];
-    currentPlayer = (currentPlayer + 1) % players.length;
-  }
-  
-  // function mousePressed() {
-  //   nextTurn(); 
-  // }
-  
-  function draw() {
-    background(255);
-    let w = width / 3;
-    let h = height / 3;
-    strokeWeight(4);
-  
-    line(w, 0, w, height);
-    line(w * 2, 0, w * 2, height);
-    line(0, h, width, h);
-    line(0, h * 2, width, h * 2);
-  
-    for (let j = 0; j < 3; j++) {
-      for (let i = 0; i < 3; i++) {
-        let x = w * i + w / 2;
-        let y = h * j + h / 2;
-        let spot = board[i][j];
-        textSize(32);
-        if (spot == players[1]) {
-          noFill();
-          ellipse(x, y, w / 2);
-        } else if (spot == players[0]) {
-          let xr = w / 4;
-          line(x - xr, y - xr, x + xr, y + xr);
-          line(x + xr, y - xr, x - xr, y + xr);
+      for (let j = 0; j < 3; j++) {
+        if (board[i][j] === '') {
+          openSpots++;
         }
-  
       }
     }
-  
-    let result = checkWinner();
-    if (result != null) {
-      noLoop();
-      let resultP = createP('');
-      resultP.style('font-size', '32pt');
-      if (result == 'tie') {
-        resultP.html("Tie!")
-      } else {
-        resultP.html(`${result} wins!`);
-      }
-    } else {
-      nextTurn();
+    if (openSpots === 0) {
+      return 'tie';
     }
-  
+    return null;
   }
+  
+  function minimax(board, depth, isMaximizing) {
+    let result = checkWinner();
+    if (result !== null) {
+      if (result === ai) return 10 - depth;
+      else if (result === human) return depth - 10;
+      return 0;
+    }
+  
+    if (isMaximizing) {
+      let bestScore = -Infinity;
+      for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
+          if (board[i][j] === '') {
+            board[i][j] = ai;
+            let score = minimax(board, depth + 1, false);
+            board[i][j] = '';
+            bestScore = max(score, bestScore);
+          }
+        }
+      }
+      return bestScore;
+    } else {
+      let bestScore = Infinity;
+      for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
+          if (board[i][j] === '') {
+            board[i][j] = human;
+            let score = minimax(board, depth + 1, true);
+            board[i][j] = '';
+            bestScore = min(score, bestScore);
+          }
+        }
+      }
+      return bestScore;
+    }
+  }
+  
