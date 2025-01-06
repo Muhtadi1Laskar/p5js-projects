@@ -6,7 +6,7 @@ let rows = 0;
 let blocks = [];
 
 function setup() {
-    createCanvas(400, 400);
+    createCanvas(500, 500);
     rectMode(CENTER);
     angleMode(DEGREES);
 
