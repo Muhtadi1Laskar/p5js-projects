@@ -10,6 +10,7 @@ function setup() {
     paddleY = height / 2 - 70;
 }
 
+
 function draw() {
     background(220);
     
